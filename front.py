@@ -1,7 +1,8 @@
 from tkinter import Tk, ttk
 import tkinter as tk
 from math import cos, sin
-from db_init import VendMachine
+from db_init import VendMachine, Employer
+from hasher import verify
 
 
 class Main(tk.Frame):
@@ -20,7 +21,7 @@ class Main(tk.Frame):
         self.person_canv = tk.Canvas(self.up_frame)
         self.person_canv.create_text(70, 40, text="Пенисенко ВВВ", font=("Arial", 13))
         self.person_canv.create_text(70, 70, text="Администратор", font=("Arial", 13))
-        self.person_settings = ttk.Combobox(self.up_frame, values=["Мои сессии", "Мой профиль", "Выход"])
+        self.person_settings = ttk.Combobox(self.up_frame, values=["Мои сессии", "Мой профиль", "Выход", "Вход"])
 
         self.main_button = tk.Button(self.left_bar_frame, text="Главная", command=self.main_window)
         self.ta_monitor_but = tk.Button(self.left_bar_frame, text="Монитор ТА")
@@ -50,8 +51,8 @@ class Main(tk.Frame):
         self.page_name.place(x=0, y=10)
         self.current_dir.place(x=1000, y=10)
 
-        self.main_window()
-        self.administr_list.bind("<<ComboboxSelected>>", self.choice)
+        self.authentification()
+        self.person_settings.bind("<<ComboboxSelected>>", self.choice)
 
     def clear_main(self):
         for item in self.main_frame.winfo_children():
@@ -61,6 +62,10 @@ class Main(tk.Frame):
         match self.administr_list.get():
             case "Торговые автоматы":
                 self.vend_machine()
+
+        match self.person_settings.get():
+            case "Вход":
+                self.main_window()
 
     def main_window(self):
         self.clear_main()
@@ -162,7 +167,7 @@ class Main(tk.Frame):
     def create_machine(self):
         self.clear_main()
 
-        lst = [
+        self.create_list = [
             tk.Label(self.main_frame, text="Название ТА"),
             tk.Entry(self.main_frame),
             tk.Label(self.main_frame, text="Производитель ТА"),
@@ -217,17 +222,72 @@ class Main(tk.Frame):
             tk.Entry(self.main_frame),
         ]
 
-        for index, item in enumerate(lst):
+        for index, item in enumerate(self.create_list):
             x_step = (index // 2) % 3
             y_step = (index // 2) // 3
             offset_x = (index % 2) * 160
-            item.place(x=x_step * (120 + 160) + offset_x, y=70 * y_step)
+            item.place(x=x_step * (120 + 160) + offset_x, y=50 * y_step)
 
-        self.create_button = tk.Button(self.main_frame, text="Создать")
-        self.dell = tk.Button(self.main_frame, text="Отменить")
+        self.create_button = tk.Button(self.main_frame, text="Создать", command=self.create_vend_machine)
+        self.dell = tk.Button(self.main_frame, text="Отменить", command=self.vend_machine)
 
         self.create_button.place(x=900, y=500, width=80, height=20)
         self.dell.place(x=1000, y=500, width=80, height=20)
+
+    def create_vend_machine(self):
+        data = []
+
+        for i in self.create_list:
+            try:
+                data.append(i.get())
+
+            except AttributeError:
+                pass
+
+        VendMachine.get_or_create(
+            name=data[0],
+            firm=data[1],
+            model=data[2],
+            status=data[3],
+            adress=data[6],
+            place=data[7],
+            coordinates=data[8],
+            ser_num=data[9],
+            work_time=data[10],
+            time_zone=data[11],
+            product_matrix=data[12],
+            krit_sample=data[13],
+            push_sample=data[14],
+            client=data[15],
+            manager=data[16],
+            enginer=data[17],
+            operator=data[18],
+            pay_system=data[19],
+            service_card=data[20],
+            incas_card=data[21],
+            download_card=data[22],
+            kit_id=data[23],
+            service_prior=data[24],
+            modem=data[25]
+        )
+
+    def authentification(self, _=None):
+        self.clear_main()
+
+        self.email = tk.Entry(self.main_frame)
+        self.password = tk.Entry(self.main_frame)
+        self.accept_button = tk.Button(self.main_frame, text="Войти", command=self.render_main)
+
+        self.email.place(x=50, y=50)
+        self.password.place(x=50, y=90)
+        self.accept_button.place(x=200, y=90)
+
+    def render_main(self):
+        user = Employer.get_or_none(email=self.email.get())
+
+        if verify(self.password.get(), user.password):
+            self.main_window()
+            self.administr_list.bind("<<ComboboxSelected>>", self.choice)
 
 
 if __name__ == "__main__":

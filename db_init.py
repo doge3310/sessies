@@ -1,11 +1,12 @@
 from peewee import MySQLDatabase, Model, \
     AutoField, CharField, ForeignKeyField, \
-    DateField, IntegerField, DateTimeField, SQL
+    DateField, IntegerField, DateTimeField, SQL, TimeField
 import pymysql
 from pymysql import MySQLError
-from datetime import datetime, date
+from datetime import date
+from hasher import get_hash
 
-password = "1234"
+password = "1234_8765"
 user = "root"
 host = "localhost"
 port = 3306
@@ -39,53 +40,84 @@ db_connect = MySQLDatabase(db_name,
 
 
 class Table(Model):
-    id = AutoField()
-
     class Meta:
         database = db_connect
 
 
 class VendModel(Table):
+    id = AutoField()
     name = CharField()
 
 
 class VendStatus(Table):
+    id = AutoField()
     name = CharField()
 
 
 class Role(Table):
+    id = AutoField()
     name = CharField()
 
 
 class Employer(Table):
+    id = AutoField()
     first_name = CharField()
     mid_name = CharField()
     last_name = CharField()
+    password = CharField()
     email = CharField()
     phone = CharField()
     role = ForeignKeyField(Role)
 
 
+class KitOnline(Table):
+    id = AutoField()
+    name = CharField()
+
+
+class Modem(Table):
+    id = AutoField()
+    name = CharField()
+
+
 class VendMachine(Table):
+    id = AutoField()
     adress = CharField()
+    place = CharField()
+    coordinates = CharField()
+    work_time = TimeField()
+    time_zone = CharField()
+    product_matrix = CharField()
+    krit_sample = CharField()
+    push_sample = CharField()
+    client = ForeignKeyField(Employer)
+    manager = ForeignKeyField(Employer)
+    enginer = ForeignKeyField(Employer)
+    operator = ForeignKeyField(Employer)
+    pay_system = CharField()
+    service_card = CharField()
+    incas_card = CharField()
+    download_card = CharField()
+    kit_id = ForeignKeyField(KitOnline)
+    service_prior = CharField()
     model = ForeignKeyField(VendModel)
     name = CharField()
     money = IntegerField()
     ser_num = CharField()
     invent_num = CharField()
     firm = CharField()
-    modem = CharField()
+    modem = ForeignKeyField(Modem)
     date_expluatation = DateField()
-    date_created = DateField()
+    date_created = DateField(default="20.01.01")
     date_last_test = DateField()
     test_interval = IntegerField()
-    resource = IntegerField()
-    next_fix_date = DateField()
-    fix_time = IntegerField()
+    resource = IntegerField(default=1)
+    next_fix_date = DateField(default="99.01.01")
+    fix_time = IntegerField(default=2)
     status = ForeignKeyField(VendStatus)
     create_country = CharField()
-    invent_date = DateField()
-    employer = ForeignKeyField(Employer)
+    invent_date = DateField(default="21.01.01")
+    test_employer = ForeignKeyField(Employer, default=1)
     date_inserted = DateTimeField(default=date.today().strftime("%d.%m.%Y"))
 
     class Meta:
@@ -97,6 +129,7 @@ class VendMachine(Table):
 
 
 class Product(Table):
+    id = AutoField()
     name = CharField()
     description = CharField()
     price = IntegerField()
@@ -106,6 +139,7 @@ class Product(Table):
 
 
 class Fix(Table):
+    id = AutoField()
     machine = ForeignKeyField(VendMachine)
     fix_date = DateField()
     description = CharField()
@@ -127,57 +161,62 @@ def main():
     )
 
     test, _ = Employer.get_or_create(
-        email="test@sdfg",
+        email="test@",
         phone="678905",
         defaults={
             "first_name": "sdfghdd",
             "mid_name": "dfghj",
             "last_name": "dh",
-            "role": 1
+            "role": 1,
+            "password": get_hash("123")
         }
     )
 
-    test, _ = VendMachine.get_or_create(
-        ser_num="8h95743",
-        defaults={
-            "adress": "sh",
-            "model": 1,
-            "money": 34567,
-            "invent_num": "drgs",
-            "firm": "jdfghloni",
-            "date_expluatation": "11.11.2000",
-            "date_created": "11.11.2001",
-            "date_last_test": "11.11.2002",
-            "test_interval": 1231,
-            "resource": 123,
-            "next_fix_date": "11.11.2003",
-            "fix_time": 12,
-            "status": 1,
-            "country": "Russia",
-            "invent_date": "12.12.2000",    # yyyy-dd-mm
-            "employer": 1,
-        }
+    test, _ = KitOnline.get_or_create(
+        name="1423"
     )
+
+    test, _ = Modem.get_or_create(
+        name="sdfghuil"
+    )
+
     test, _ = VendMachine.get_or_create(
-        ser_num="8h9574",
-        defaults={
-            "adress": "sh",
-            "model": 1,
-            "money": 34567,
-            "invent_num": "drgs",
-            "firm": "jdfghloni",
-            "date_expluatation": "11.11.2000",
-            "date_created": "11.11.2001",
-            "date_last_test": "11.11.2002",
-            "test_interval": 1231,
-            "resource": 123,
-            "next_fix_date": "11.11.2003",
-            "fix_time": 12,
-            "status": 1,
-            "country": "Russia",
-            "invent_date": "12.12.2000",    # yyyy-dd-mm
-            "employer": 1,
-        }
+        adress="ул. Ленина, 1",
+        place="Офис",
+        coordinates="55.0, 37.0",
+        work_time="08:00",
+        time_zone="MSK",
+        product_matrix="A1",
+        krit_sample="S1",
+        push_sample="P1",
+        client=1,
+        manager=1,
+        enginer=1,
+        operator=1,
+        pay_system="Card",
+        service_card="123",
+        incas_card="456",
+        download_card="789",
+        kit_id=1,
+        service_prior="Normal",
+        model=1,
+        name="Тестовый автомат",
+        money=23456,
+        ser_num="SN123",
+        invent_num="INV123",
+        firm="VendorCorp",
+        modem=1,
+        date_expluatation="21.01.01",
+        date_created="20.01.01",
+        date_last_test="21.02.01",
+        test_interval=30,
+        resource=100,
+        next_fix_date="27.01.01",
+        fix_time=10,
+        status=1,
+        create_country="RU",
+        invent_date="21.01.01",
+        test_employer=1
     )
 
     test, _ = Product.get_or_create(
@@ -209,5 +248,7 @@ if __name__ == "__main__":
                               Employer,
                               VendModel,
                               Product,
-                              Fix])
+                              Fix,
+                              KitOnline,
+                              Modem])
     main()
